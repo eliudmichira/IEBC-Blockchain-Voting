@@ -1,24 +1,34 @@
-pragma solidity ^0.5.15;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0; // Updated to a more recent version for security and features
 
 contract Migrations {
-  address public owner;
-  uint public last_completed_migration;
+    address public owner; // The deployer of the contract
+    uint256 public lastCompletedMigration; // Tracks the last completed migration step
 
-  modifier restricted() {
-    require(msg.sender == owner, "Access restricted to owner");
-    _;
-  }
+    // Event to log upgrades
+    event Upgraded(address indexed newContract);
 
-  constructor() public {
-    owner = msg.sender;
-  }
+    // Restrict access to owner only
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
+        _;
+    }
 
-  function setCompleted(uint completed) public restricted {
-    last_completed_migration = completed;
-  }
+    // Constructor sets the deployer as the owner
+    constructor() {
+        owner = msg.sender;
+    }
 
-  function upgrade(address new_address) public restricted {
-    Migrations upgraded = Migrations(new_address);
-    upgraded.setCompleted(last_completed_migration);
-  }
+    // Set the last completed migration step
+    function setCompleted(uint256 completed) external onlyOwner {
+        lastCompletedMigration = completed;
+    }
+
+    // Upgrade to a new contract address and transfer migration state
+    function upgrade(address newAddress) external onlyOwner {
+        require(newAddress != address(0), "New address cannot be zero");
+        Migrations upgraded = Migrations(newAddress);
+        upgraded.setCompleted(lastCompletedMigration);
+        emit Upgraded(newAddress);
+    }
 }

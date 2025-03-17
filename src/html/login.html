@@ -1,34 +1,1397 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login Page</title>
-  <link rel="stylesheet" type="text/css" href="../css/login.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure login for decentralized blockchain voting platform">
+    <meta name="csrf-token" content="" id="csrf-token">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; font-src 'self' data:; img-src 'self' data: https://via.placeholder.com https://cdn.pixabay.com; connect-src 'self' http://localhost:8000 https://api.example.com;">
+    <title>Login - Decentralized Voting System</title>
+    
+    <!-- Styles -->
+    <!-- TODO: For production, install Tailwind CSS as a PostCSS plugin or use the Tailwind CLI -->
+    <!-- This CDN approach is only for development purposes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Using Unicode symbols instead of Font Awesome -->
+    <style>
+        /* Base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+        
+        /* Unicode icons */
+        .icon-sun::before { content: "☀️"; }
+        .icon-moon::before { content: "🌙"; }
+        .icon-user::before { content: "👤"; }
+        .icon-users::before { content: "👥"; }
+        .icon-user-shield::before { content: "🛡️"; }
+        .icon-connect::before { content: "🔌"; }
+        .icon-disconnect::before { content: "🔌"; }
+        .icon-vote::before { content: "🗳️"; }
+        .icon-chart::before { content: "📊"; }
+        .icon-settings::before { content: "⚙️"; }
+        .icon-plus-circle::before { content: "➕"; }
+        .icon-download::before { content: "💾"; }
+        .icon-link::before { content: "🔗"; }
+        .icon-network-wired::before { content: "🌐"; }
+        .icon-file-contract::before { content: "📄"; }
+        .icon-sync-alt::before { content: "🔄"; }
+        .icon-calendar-alt::before { content: "📅"; }
+        .icon-clock::before { content: "⏰"; }
+        .icon-user-plus::before { content: "👤+"; }
+        .icon-list::before { content: "📋"; }
+        .icon-calendar-check::before { content: "📆"; }
+        .icon-edit::before { content: "✏️"; }
+        .icon-calendar-plus::before { content: "📅+"; }
+        .icon-save::before { content: "💾"; }
+        .icon-check-square::before { content: "✅"; }
+        .icon-trophy::before { content: "🏆"; }
+        .icon-table::before { content: "🗃️"; }
+        .icon-file-export::before { content: "📤"; }
+        .icon-times::before { content: "❌"; }
+        .icon-check-circle::before { content: "✓"; }
+        .icon-exclamation-circle::before { content: "❗"; }
+        .icon-exclamation-triangle::before { content: "⚠️"; }
+        .icon-info-circle::before { content: "ℹ️"; }
+        .icon-sign-out-alt::before { content: "🚪"; }
+        .icon-logout::before { content: "🚪"; }
+        .icon-plug::before { content: "🔌"; }
+        .icon-flag-checkered::before { content: "🏁"; }
+        .icon-wallet::before { content: "👛"; }
+        .icon-lock::before { content: "🔒"; }
+        .icon-eye::before { content: "👁️"; }
+        .icon-sign-in-alt::before { content: "🚪"; }
+        .icon-user-plus::before { content: "👤+"; }
+        .icon-times-circle::before { content: "❌"; }
+        
+        /* Icon spacing */
+        [class^="icon-"] {
+            display: inline-block;
+            margin-right: 0.25rem;
+        }
+        
+        /* Blockchain background */
+        .blockchain-background {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="none"/><path d="M20,50 L35,35 L65,35 L80,50 L65,65 L35,65 Z" stroke="rgba(59, 130, 246, 0.1)" stroke-width="2" fill="none"/><circle cx="35" cy="35" r="3" fill="rgba(59, 130, 246, 0.1)"/><circle cx="65" cy="35" r="3" fill="rgba(59, 130, 246, 0.1)"/><circle cx="80" cy="50" r="3" fill="rgba(59, 130, 246, 0.1)"/><circle cx="65" cy="65" r="3" fill="rgba(59, 130, 246, 0.1)"/><circle cx="35" cy="65" r="3" fill="rgba(59, 130, 246, 0.1)"/><circle cx="20" cy="50" r="3" fill="rgba(59, 130, 246, 0.1)"/></svg>');
+            background-repeat: repeat;
+            background-size: 100px 100px;
+        }
+        
+        /* Dark mode blockchain background */
+        .dark .blockchain-background {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="none"/><path d="M20,50 L35,35 L65,35 L80,50 L65,65 L35,65 Z" stroke="rgba(59, 130, 246, 0.05)" stroke-width="2" fill="none"/><circle cx="35" cy="35" r="3" fill="rgba(59, 130, 246, 0.05)"/><circle cx="65" cy="35" r="3" fill="rgba(59, 130, 246, 0.05)"/><circle cx="80" cy="50" r="3" fill="rgba(59, 130, 246, 0.05)"/><circle cx="65" cy="65" r="3" fill="rgba(59, 130, 246, 0.05)"/><circle cx="35" cy="65" r="3" fill="rgba(59, 130, 246, 0.05)"/><circle cx="20" cy="50" r="3" fill="rgba(59, 130, 246, 0.05)"/></svg>');
+        }
+        
+        /* Loader */
+        .loader {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
 </head>
 
-<body>
-  <h1 align="center" style="color: azure;">Decentralized Voting Using Ethereum Blockchain</h1>
-  <div class="container mt-5">
-    <h1>Login</h1>
-    <form id="loginForm">
-      <div class="form-group">
-        <label for="voter-id"><h3>Voter ID</h3></label>
-        <input type="text" class="form-control" id="voter-id" name="voter-id" placeholder="Voter id">
-      </div>
-      <div class="form-group">
-        <label for="password"><h3>Password</h3></label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
-      </div>
-      <button type="submit" class="btn btn-primary"><b>Login</b></button>
-    </form>
-  </div>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
-  <script src="../js/login.js" type="module"></script>
-</body>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex flex-col items-center justify-center p-4">
+    <main class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden">
+        <!-- Logo and Title -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center">
+                <div class="bg-primary-600 dark:bg-primary-700 p-3 rounded-full">
+                    <span class="icon-vote text-white text-xl"></span>
+                </div>
+                <h1 class="ml-3 text-2xl font-bold text-gray-900 dark:text-white">Blockchain Voting</h1>
+            </div>
+            
+            <!-- Theme Toggle Button -->
+            <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <span class="icon-sun text-yellow-500 dark:hidden"></span>
+                <span class="icon-moon text-blue-300 hidden dark:block"></span>
+            </button>
+        </div>
+        
+        <!-- Connection Status Indicator -->
+        <div class="absolute top-4 right-4 flex items-center" id="connectionIndicator">
+            <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2 pulse-animation" id="connectionDot"></div>
+            <span class="text-xs text-gray-600 dark:text-gray-400 font-medium" id="connectionText">Checking connection...</span>
+        </div>
+        
+        <!-- Authentication Section -->
+        <div class="space-y-6">
+            <!-- Login Method Selection -->
+            <div class="flex flex-col space-y-4">
+                <h2 class="text-lg font-medium text-center text-gray-900 dark:text-white mb-4">Welcome Back</h2>
+                
+                <!-- Email Field -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address
+                    </label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <input id="email"
+                            type="email"
+                            name="email"
+                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm"
+                            placeholder="Enter your email"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <!-- Password Field -->
+                <div>
+                    <div class="flex justify-between items-center">
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Password
+                        </label>
+                        <a href="#" class="text-xs text-primary-600 dark:text-primary-400 hover:underline" id="forgotPassword">
+                            Forgot password?
+                    </a>
+                </div>
+                    <div class="relative mt-1">
+                        <input type="password" id="password" name="password" required
+                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm"
+                            placeholder="Enter your password"
+                            autocomplete="current-password">
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400">
+                            <span class="icon-eye"></span>
+                        </button>
+                    </div>
+            </div>
 
+                <!-- Remember Me Checkbox -->
+                <div class="flex items-center">
+                    <input id="rememberMe" name="rememberMe" type="checkbox" 
+                           class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500 dark:bg-gray-700 h-4 w-4">
+                    <label for="rememberMe" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        Remember me for 30 days
+                    </label>
+                </div>
+                
+                <!-- Login Button -->
+                <button type="submit" id="loginButton"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-700 dark:hover:bg-primary-800 transition-colors">
+                    <span class="icon-sign-in-alt mr-2"></span>
+                    Login
+                </button>
+                
+                <!-- Divider -->
+                <div class="relative flex items-center my-4">
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                    <span class="flex-shrink mx-4 text-gray-500 dark:text-gray-400 text-sm">or</span>
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                
+                <!-- Wallet Connect Button -->
+                <button id="connectWalletBtn" 
+                    class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-200">
+                    <span class="icon-wallet mr-2"></span>
+                    Connect with MetaMask to Vote
+                </button>
+                
+                <!-- Register Link -->
+                <div class="text-center mt-4">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Don't have an account?</span>
+                    <button type="button" id="registerButton" class="ml-1 text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                        Create account
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback area for login form -->
+            <div id="loginFeedback" class="hidden mt-3 p-3 rounded-md text-center text-sm"></div>
+        </div>
+        
+        <!-- Decorative background elements -->
+        <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-primary-600 opacity-10 rounded-full"></div>
+        <div class="absolute -top-8 -left-8 w-24 h-24 bg-blue-600 opacity-10 rounded-full"></div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-gray-500 dark:text-gray-400 text-xs">
+        <p>© 2025 Decentralized Voting System. All rights reserved.</p>
+    </footer>
+    
+    <!-- Registration Modal -->
+    <div id="registrationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md relative">
+            <button id="closeRegistrationModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <span class="icon-times"></span>
+            </button>
+            
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Create Account</h2>
+            
+            <div class="space-y-4">
+                <!-- Email Field -->
+                <div>
+                    <label for="registerEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address
+                    </label>
+                    <div class="mt-1">
+                        <input id="registerEmail"
+                            type="email"
+                            name="email"
+                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm"
+                            placeholder="Enter your email"
+                            required
+                        >
+                        </div>
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="registerPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Password
+                        </label>
+                    <div class="relative mt-1">
+                        <input type="password" id="registerPassword" name="password" required
+                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white text-sm"
+                            placeholder="Create a password">
+                        <button type="button" id="toggleRegisterPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400">
+                            <span class="icon-eye"></span>
+                        </button>
+                    </div>
+
+                    <!-- Password Strength Indicator -->
+                    <div id="passwordStrength" class="mt-2">
+                        <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                            <span>Strength:</span>
+                            <span id="strengthText">Weak</span>
+                        </div>
+                        <div class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div id="strengthBar" 
+                                 class="h-full bg-red-500 transition-all duration-300" 
+                                 style="width: 0%">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Requirements -->
+                    <div id="passwordRequirements" class="mt-2 text-xs space-y-1">
+                        <div class="flex items-center text-gray-600 dark:text-gray-400" id="req-length">
+                            <span class="icon-times-circle mr-1 text-red-500"></span> 8+ characters
+                        </div>
+                        <div class="flex items-center text-gray-600 dark:text-gray-400" id="req-uppercase">
+                            <span class="icon-times-circle mr-1 text-red-500"></span> Uppercase letter
+                        </div>
+                        <div class="flex items-center text-gray-600 dark:text-gray-400" id="req-number">
+                            <span class="icon-times-circle mr-1 text-red-500"></span> Number
+                        </div>
+                        <div class="flex items-center text-gray-600 dark:text-gray-400" id="req-special">
+                            <span class="icon-times-circle mr-1 text-red-500"></span> Special character
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms Checkbox -->
+                <div class="flex items-center">
+                    <input id="acceptTerms" name="acceptTerms" type="checkbox" 
+                           class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500 dark:bg-gray-700 h-4 w-4">
+                    <label for="acceptTerms" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        I accept the <a href="#" class="text-primary-600 dark:text-primary-400 hover:underline">Terms of Service</a>
+                    </label>
+                </div>
+
+                <!-- Register Button -->
+                <button type="button" id="completeRegistrationBtn"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-700 dark:hover:bg-primary-800 transition-colors">
+                    <span class="icon-user-plus mr-2"></span>
+                    Create Account
+                    </button>
+                
+                <!-- Divider -->
+                <div class="relative flex items-center my-4">
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                    <span class="flex-shrink mx-4 text-gray-500 dark:text-gray-400 text-sm">or</span>
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                
+                <!-- Register with Wallet -->
+                <button id="registerWithWalletBtn" 
+                    class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                    <span class="icon-wallet mr-2"></span>
+                    Register with MetaMask
+                </button>
+            </div>
+                
+            <!-- Registration Feedback -->
+            <div id="registerFeedback" class="hidden mt-4 p-3 rounded-md text-center text-sm"></div>
+            </div>
+        </div>
+    
+    <!-- Debug Panel (Hidden by default) -->
+    <div id="debugPanel" class="debug-panel hidden">
+        <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-primary-400">Debug Info</span>
+            <button id="closeDebugPanel" class="text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded transition-colors">Close</button>
+        </div>
+        <div id="debugContent" class="text-xs"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/ethers@6.13.1/dist/ethers.umd.min.js"></script>
+    
+    <!-- Ensure proper redirection -->
+    <script>
+        // Check if we were redirected here due to a failed login
+        document.addEventListener('DOMContentLoaded', function() {
+            const redirectAttempt = sessionStorage.getItem('redirectAttempt');
+            if (redirectAttempt) {
+                // Clear the redirect attempt flag
+                sessionStorage.removeItem('redirectAttempt');
+                
+                // Show a message about the redirect
+                const loginFeedback = document.getElementById('loginFeedback');
+                if (loginFeedback) {
+                    loginFeedback.textContent = 'Previous login attempt failed. Please try again.';
+                    loginFeedback.classList.remove('hidden');
+                    loginFeedback.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-800', 'dark:text-yellow-100');
+                }
+            }
+            
+            // Check for API connection errors
+            const apiErrors = localStorage.getItem('apiErrors');
+            if (apiErrors) {
+                // Clear the API errors flag
+                localStorage.removeItem('apiErrors');
+                
+                // Show a message about the API errors
+                const loginFeedback = document.getElementById('loginFeedback');
+                if (loginFeedback) {
+                    loginFeedback.textContent = 'API connection failed. The system will work in offline mode.';
+                    loginFeedback.classList.remove('hidden');
+                    loginFeedback.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-800', 'dark:text-yellow-100');
+                }
+            }
+        });
+        
+        // Handle page unload to detect navigation issues
+        window.addEventListener('beforeunload', function() {
+            // If we have an active authentication but haven't completed navigation
+            if (localStorage.getItem('isAuthenticated') === 'true' && 
+                localStorage.getItem('navigationComplete') !== 'true') {
+                // Set a flag to indicate we're in the middle of a redirect
+                sessionStorage.setItem('redirectAttempt', 'true');
+            }
+        });
+        
+        // Handle API errors
+        window.addEventListener('error', function(event) {
+            // Check if the error is related to API connection
+            if (event.message && (
+                event.message.includes('ERR_CONNECTION_REFUSED') || 
+                event.message.includes('Failed to fetch') ||
+                event.message.includes('NetworkError') ||
+                event.message.includes('AxiosError')
+            )) {
+                console.error('API connection error detected:', event.message);
+                
+                // Set a flag to indicate API errors
+                localStorage.setItem('apiErrors', 'true');
+                
+                // If we're handling API errors, continue with offline mode
+                if (localStorage.getItem('handleApiErrors') === 'true') {
+                    // Clear the flag
+                    localStorage.removeItem('handleApiErrors');
+                    
+                    // Continue with offline mode
+                    console.log('Continuing in offline mode');
+                }
+            }
+        });
+    </script>
+    
+    <script>
+        // Direct implementation of login functionality without external modules
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug logger function
+            function debugLog(message, data = null) {
+                const debugPanel = document.getElementById('debugPanel');
+                const debugContent = document.getElementById('debugContent');
+                if (!debugPanel || !debugContent) return;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                let content = `<div class="mb-1"><span class="text-gray-400">${timestamp}</span> ${message}</div>`;
+                
+                if (data) {
+                    if (typeof data === 'object') {
+                        content += `<pre class="text-green-400 text-xs mt-1 mb-2 overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>`;
+                    } else {
+                        content += `<pre class="text-green-400 text-xs mt-1 mb-2">${data}</pre>`;
+                    }
+                }
+                
+                debugContent.innerHTML = content + debugContent.innerHTML;
+                console.log(message, data);
+            }
+
+            // Handle tab switching
+            const traditionalLoginTab = document.getElementById('traditionalLoginTab');
+            const walletLoginTab = document.getElementById('walletLoginTab');
+            const traditionalLoginForm = document.getElementById('traditionalLoginForm');
+            const walletLoginForm = document.getElementById('walletLoginForm');
+            
+            if (traditionalLoginTab && walletLoginTab) {
+                traditionalLoginTab.addEventListener('click', function() {
+                    // Update tab styling
+                    traditionalLoginTab.classList.add('border-primary-500', 'text-primary-600', 'dark:text-primary-400', 'font-medium');
+                    traditionalLoginTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    
+                    walletLoginTab.classList.remove('border-primary-500', 'text-primary-600', 'dark:text-primary-400', 'font-medium');
+                    walletLoginTab.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    
+                    // Show/hide forms
+                    traditionalLoginForm.classList.remove('hidden');
+                    walletLoginForm.classList.add('hidden');
+                    
+                    debugLog('Switched to traditional login');
+                });
+                
+                walletLoginTab.addEventListener('click', function() {
+                    // Update tab styling
+                    walletLoginTab.classList.add('border-primary-500', 'text-primary-600', 'dark:text-primary-400', 'font-medium');
+                    walletLoginTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    
+                    traditionalLoginTab.classList.remove('border-primary-500', 'text-primary-600', 'dark:text-primary-400', 'font-medium');
+                    traditionalLoginTab.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    
+                    // Show/hide forms
+                    walletLoginForm.classList.remove('hidden');
+                    traditionalLoginForm.classList.add('hidden');
+                    
+                    debugLog('Switched to wallet login');
+                });
+            }
+            
+            // Advanced settings toggle
+            const advancedSettingsToggle = document.getElementById('advancedSettingsToggle');
+            const advancedSettingsContent = document.getElementById('advancedSettingsContent');
+            const advancedSettingsArrow = document.getElementById('advancedSettingsArrow');
+            
+            if (advancedSettingsToggle && advancedSettingsContent) {
+                advancedSettingsToggle.addEventListener('click', function() {
+                    advancedSettingsContent.classList.toggle('hidden');
+                    
+                    // Rotate arrow
+                    if (advancedSettingsArrow) {
+                        advancedSettingsArrow.classList.toggle('rotate-180');
+                    }
+                    
+                    debugLog('Advanced settings toggled');
+                });
+            }
+
+            // Show feedback message
+            function showFeedback(element, message, isError = false) {
+                if (!element) return;
+                
+                element.textContent = message;
+                element.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'dark:bg-green-800', 'dark:text-green-100', 'dark:bg-red-800', 'dark:text-red-100');
+                
+                if (isError) {
+                    element.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-800', 'dark:text-red-100');
+                } else {
+                    element.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-800', 'dark:text-green-100');
+                }
+                
+                debugLog(isError ? `Error: ${message}` : `Success: ${message}`);
+            }
+            
+            // Set loading state on button
+            function setLoading(button, isLoading) {
+                if (!button) return;
+                
+                if (isLoading) {
+                    button._originalHTML = button.innerHTML;
+                    button.disabled = true;
+                    button.innerHTML = '<div class="loader"></div><span>Processing...</span>';
+                } else {
+                    button.disabled = false;
+                    button.innerHTML = button._originalHTML || 'Submit';
+                }
+            }
+            
+            // Password strength functionality
+            function updatePasswordStrength(password, inputId = 'password') {
+                const isRegisterPassword = inputId === 'registerPassword';
+                const prefix = isRegisterPassword ? 'register' : '';
+                
+                const strengthBar = document.getElementById('strengthBar');
+                const strengthText = document.getElementById('strengthText');
+                const passwordStrength = document.getElementById('passwordStrength');
+                
+                if (!strengthBar || !strengthText || !passwordStrength) return 0;
+                
+                // Calculate strength
+                let score = 0;
+                if (password.length >= 8) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[^A-Za-z0-9]/.test(password)) score++;
+                
+                // Show strength indicator
+                passwordStrength.classList.remove('hidden');
+                
+                // Update bar width
+                strengthBar.style.width = `${score * 25}%`;
+                
+                // Update color and text
+                if (score <= 1) {
+                    strengthBar.className = 'h-full bg-red-500 transition-all duration-300';
+                    strengthText.textContent = 'Weak';
+                } else if (score === 2) {
+                    strengthBar.className = 'h-full bg-yellow-500 transition-all duration-300';
+                    strengthText.textContent = 'Fair';
+                } else if (score === 3) {
+                    strengthBar.className = 'h-full bg-yellow-400 transition-all duration-300';
+                    strengthText.textContent = 'Good';
+                } else {
+                    strengthBar.className = 'h-full bg-green-500 transition-all duration-300';
+                    strengthText.textContent = 'Strong';
+                }
+                
+                // Update password requirements
+                const requirements = {
+                    'length': password.length >= 8,
+                    'uppercase': /[A-Z]/.test(password),
+                    'number': /[0-9]/.test(password),
+                    'special': /[^A-Za-z0-9]/.test(password)
+                };
+                
+                Object.entries(requirements).forEach(([req, isMet]) => {
+                    const reqElement = document.getElementById(`req-${req}`);
+                    if (!reqElement) return;
+                    
+                    const icon = reqElement.querySelector('span');
+                    if (isMet) {
+                        icon.className = 'icon-check-circle mr-1 text-green-500';
+                        reqElement.classList.remove('text-gray-600', 'dark:text-gray-400');
+                        reqElement.classList.add('text-green-600', 'dark:text-green-400');
+                    } else {
+                        icon.className = 'icon-times-circle mr-1 text-red-500';
+                        reqElement.classList.remove('text-green-600', 'dark:text-green-400');
+                        reqElement.classList.add('text-gray-600', 'dark:text-gray-400');
+                    }
+                });
+                
+                // Update login button if on main form
+                if (!isRegisterPassword) {
+                const loginButton = document.getElementById('loginButton');
+                if (loginButton) {
+                    loginButton.disabled = score < 2;
+                    }
+                }
+                
+                return score;
+            }
+            
+            // Connect with MetaMask button
+            const connectButton = document.getElementById('connectWalletBtn');
+            if (connectButton) {
+                connectButton.addEventListener('click', async function() {
+                    debugLog('Connect button clicked');
+                    
+                    try {
+                        // Check if MetaMask is installed
+                        if (!window.ethereum) {
+                            showFeedback(document.getElementById('loginFeedback'), 'MetaMask is not installed. Please install MetaMask to continue.', true);
+                            return;
+                        }
+                        
+                        // Check if user is already connected to MetaMask
+                        const accounts = await window.ethereum.request({ 
+                            method: 'eth_accounts' // This doesn't trigger the MetaMask popup
+                        });
+                        
+                        let address;
+                        if (accounts && accounts.length > 0) {
+                            // User is already connected, use the existing connection
+                            address = accounts[0];
+                            debugLog('Using existing MetaMask connection', { address });
+                        } else {
+                        // Show loading state
+                        setLoading(this, true);
+                        
+                        // Request accounts from MetaMask
+                            const newAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                            address = newAccounts[0];
+                        
+                        debugLog('Connected to MetaMask', { address });
+                        }
+                        
+                        // Get chain ID to verify network
+                        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                        debugLog('Connected to network', { chainId });
+                        
+                        // Verify voter eligibility (in a real app, this would check against a smart contract)
+                        // For demo, we'll simulate this check
+                        const checkVoterEligibility = async (address) => {
+                            // Simulate API call to check voter eligibility
+                            return new Promise(resolve => {
+                                setTimeout(() => {
+                                    // For demo purposes, all addresses are eligible
+                                    const isEligible = true;
+                                    resolve(isEligible);
+                                }, 500);
+                            });
+                        };
+                        
+                        const isEligible = await checkVoterEligibility(address);
+                        
+                        if (!isEligible) {
+                            showFeedback(document.getElementById('loginFeedback'), 'This wallet is not registered as an eligible voter.', true);
+                            setLoading(this, false);
+                            return;
+                        }
+                        
+                        // Simulate wallet authentication
+                        setTimeout(async () => {
+                            try {
+                                // In a real app, you would verify the wallet signature
+                                const isAdmin = address.toLowerCase().startsWith('0x0') || 
+                                              address.toLowerCase().includes('admin');
+                                
+                                // Store auth data in localStorage
+                                localStorage.setItem('token', 'wallet-token-' + Math.random());
+                                localStorage.setItem('walletAddress', address);
+                                localStorage.setItem('role', isAdmin ? 'admin' : 'voter');
+                                localStorage.setItem('isAuthenticated', 'true');
+                                
+                                // Set offline mode flag to handle API errors
+                                localStorage.setItem('offlineMode', 'true');
+                                
+                                // Store voting-related data
+                                if (!isAdmin) {
+                                    localStorage.setItem('canVote', 'true');
+                                    localStorage.setItem('hasVoted', 'false');
+                                    localStorage.setItem('voterId', address);
+                                    
+                                    // Set a flag to open the voting section immediately
+                                    localStorage.setItem('openVotingSection', 'true');
+                                    
+                                    // Store the timestamp to ensure the voting section opens
+                                    localStorage.setItem('votingAccessTimestamp', Date.now());
+                                }
+                                
+                                // Show success message with different text based on role
+                                if (isAdmin) {
+                                    showFeedback(document.getElementById('loginFeedback'), 'Admin wallet connected! Redirecting to admin panel...', false);
+                                } else {
+                                    showFeedback(document.getElementById('loginFeedback'), 'Voter wallet connected! Redirecting to voting page...', false);
+                                }
+                                
+                                debugLog('Wallet login successful', { 
+                                    address, 
+                                    role: isAdmin ? 'admin' : 'voter',
+                                    isEligible
+                                });
+                                
+                                // Redirect to the appropriate page
+                                await safeRedirect(isAdmin);
+                            } catch (error) {
+                                console.error('Error during wallet login:', error);
+                                debugLog('Wallet login error', error);
+                                showFeedback(document.getElementById('loginFeedback'), `Login error: ${error.message}`, true);
+                                setLoading(connectButton, false);
+                            }
+                        }, 800);
+                        
+                    } catch (error) {
+                        console.error('Error connecting to MetaMask:', error);
+                        debugLog('MetaMask connection error', error);
+                        
+                        // Show error
+                        showFeedback(document.getElementById('loginFeedback'), `Failed to connect: ${error.message}`, true);
+                        setLoading(connectButton, false);
+                    }
+                });
+            }
+            
+            // Password input event
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    updatePasswordStrength(password);
+                });
+            }
+            
+            // Register password input event
+            const registerPasswordInput = document.getElementById('registerPassword');
+            if (registerPasswordInput) {
+                registerPasswordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    updatePasswordStrength(password, 'registerPassword');
+                });
+            }
+            
+            // Toggle password visibility
+            const togglePassword = document.getElementById('togglePassword');
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                });
+            }
+            
+            // Toggle register password visibility
+            const toggleRegisterPassword = document.getElementById('toggleRegisterPassword');
+            if (toggleRegisterPassword && registerPasswordInput) {
+                toggleRegisterPassword.addEventListener('click', function() {
+                    const type = registerPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    registerPasswordInput.setAttribute('type', type);
+                });
+            }
+            
+            // Login form submission
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const rememberMe = document.getElementById('rememberMe').checked;
+                    
+                    // Validate inputs
+                    if (!email || !password) {
+                        showFeedback(document.getElementById('loginFeedback'), 'Please fill in all fields', true);
+                        return;
+                    }
+                    
+                    // Set loading state
+                    setLoading(loginButton, true);
+                    
+                    // Simulate API call with timeout
+                    setTimeout(async () => {
+                        try {
+                            // For demo: Determine if email looks like an admin email
+                            const isAdmin = email.toLowerCase().includes('admin');
+                        
+                        debugLog('Login successful', { 
+                                email, 
+                            role: isAdmin ? 'admin' : 'voter',
+                            rememberMe 
+                        });
+                        
+                        // Store auth data in localStorage
+                        localStorage.setItem('token', 'demo-token-' + Math.random());
+                            localStorage.setItem('email', email);
+                        localStorage.setItem('role', isAdmin ? 'admin' : 'voter');
+                        
+                        if (rememberMe) {
+                                localStorage.setItem('rememberedEmail', email);
+                            // Set expiration for 30 days
+                            const expires = new Date();
+                            expires.setDate(expires.getDate() + 30);
+                            localStorage.setItem('rememberMeExpires', expires.getTime());
+                        }
+                        
+                        // Show success message
+                        showFeedback(document.getElementById('loginFeedback'), 'Login successful! Redirecting...', false);
+                        
+                        // Redirect to the appropriate page
+                            await safeRedirect(isAdmin);
+                        } catch (error) {
+                            console.error('Error during login:', error);
+                            debugLog('Login error', error);
+                            showFeedback(document.getElementById('loginFeedback'), `Login error: ${error.message}`, true);
+                            setLoading(loginButton, false);
+                        }
+                    }, 800); // Simulate API delay
+                });
+            }
+            
+            // Register button
+            const registerButton = document.getElementById('registerButton');
+            if (registerButton) {
+                registerButton.addEventListener('click', function() {
+                    const voterId = document.getElementById('voterId').value;
+                    const password = document.getElementById('password').value;
+                    
+                    // Validate inputs
+                    if (!voterId || !password) {
+                        showFeedback(document.getElementById('registerFeedback'), 'Please connect MetaMask and enter a password', true);
+                        return;
+                    }
+                    
+                    // Validate password strength
+                    const score = updatePasswordStrength(password);
+                    if (score < 3) {
+                        showFeedback(document.getElementById('registerFeedback'), 'Please use a stronger password', true);
+                        return;
+                    }
+                    
+                    // Set loading state
+                    setLoading(registerButton, true);
+                    
+                    // Simulate registration
+                    setTimeout(() => {
+                        // In a real app, you would register the user
+                        // For demo, just show success
+                        showFeedback(document.getElementById('registerFeedback'), 'Registration successful! You can now login.', false);
+                        setLoading(registerButton, false);
+                    }, 1000);
+                });
+            }
+            
+            // Forgot password handler
+            document.getElementById('forgotPassword')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Password reset functionality will be implemented in a future update. Please contact support for assistance.');
+            });
+            
+            // Debug panel toggle
+            document.addEventListener('keydown', function(e) {
+                if (e.altKey && e.key === 'd') {
+                    const debugPanel = document.getElementById('debugPanel');
+                    debugPanel?.classList.toggle('hidden');
+                }
+            });
+            
+            const closeDebugPanel = document.getElementById('closeDebugPanel');
+            if (closeDebugPanel) {
+                closeDebugPanel.addEventListener('click', function() {
+                    document.getElementById('debugPanel')?.classList.add('hidden');
+                });
+            }
+            
+            // Test connection button
+            const testConnectionBtn = document.getElementById('testConnectionBtn');
+            const connectionStatus = document.getElementById('connectionStatus');
+            if (testConnectionBtn && connectionStatus) {
+                testConnectionBtn.addEventListener('click', function() {
+                    connectionStatus.textContent = 'Testing connection...';
+                    connectionStatus.className = 'mt-2 text-sm text-center text-yellow-400';
+                    
+                    // Simulate API connection test
+                    setTimeout(() => {
+                        const success = Math.random() > 0.3; // 70% chance of success for demo
+                        
+                        if (success) {
+                            connectionStatus.textContent = 'Connected to server';
+                            connectionStatus.className = 'mt-2 text-sm text-center text-green-400';
+                        } else {
+                            connectionStatus.textContent = 'Could not connect to server';
+                            connectionStatus.className = 'mt-2 text-sm text-center text-red-400';
+                        }
+                    }, 1000);
+                });
+            }
+            
+            // Initialize - log startup
+            debugLog('Login page initialized');
+            
+            // Update connection indicator
+            const connectionDot = document.getElementById('connectionDot');
+            const connectionText = document.getElementById('connectionText');
+            if (navigator.onLine) {
+                connectionDot.classList.remove('bg-yellow-500', 'bg-red-500');
+                connectionDot.classList.add('bg-green-500');
+                connectionText.textContent = 'Online';
+            } else {
+                connectionDot.classList.remove('bg-yellow-500', 'bg-green-500');
+                connectionDot.classList.add('bg-red-500');
+                connectionText.textContent = 'Offline';
+            }
+            
+            // Listen for online/offline events
+            window.addEventListener('online', function() {
+                connectionDot.classList.remove('bg-yellow-500', 'bg-red-500');
+                connectionDot.classList.add('bg-green-500');
+                connectionText.textContent = 'Online';
+            });
+            
+            window.addEventListener('offline', function() {
+                connectionDot.classList.remove('bg-yellow-500', 'bg-green-500');
+                connectionDot.classList.add('bg-red-500');
+                connectionText.textContent = 'Offline';
+            });
+
+            // Check for remembered login
+            const rememberedAddress = localStorage.getItem('rememberedAddress');
+            const rememberMeExpires = localStorage.getItem('rememberMeExpires');
+            
+            if (rememberedAddress && rememberMeExpires) {
+                // Check if remember me hasn't expired
+                if (parseInt(rememberMeExpires) > Date.now()) {
+                    debugLog('Found remembered login', { rememberedAddress });
+                    
+                    // For demo only - in a real app, you would validate with the server
+                    document.getElementById('rememberMe').checked = true;
+                }
+            }
+
+            // Registration modal functionality
+            const registrationModal = document.getElementById('registrationModal');
+            const closeRegistrationModal = document.getElementById('closeRegistrationModal');
+            
+            if (registerButton && registrationModal) {
+                registerButton.addEventListener('click', function() {
+                    registrationModal.classList.remove('hidden');
+                    document.getElementById('registerEmail').focus();
+                    debugLog('Registration modal opened');
+                });
+            }
+            
+            if (closeRegistrationModal && registrationModal) {
+                closeRegistrationModal.addEventListener('click', function() {
+                    registrationModal.classList.add('hidden');
+                    debugLog('Registration modal closed');
+                });
+                
+                // Close modal when clicking outside
+                registrationModal.addEventListener('click', function(e) {
+                    if (e.target === registrationModal) {
+                        registrationModal.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Complete registration button
+            const completeRegistrationBtn = document.getElementById('completeRegistrationBtn');
+            if (completeRegistrationBtn) {
+                completeRegistrationBtn.addEventListener('click', function() {
+                    const email = document.getElementById('registerEmail').value;
+                    const password = document.getElementById('registerPassword').value;
+                    const acceptTerms = document.getElementById('acceptTerms').checked;
+                    
+                    // Validate inputs
+                    if (!email || !password) {
+                        showFeedback(document.getElementById('registerFeedback'), 'Please fill in all fields', true);
+                        return;
+                    }
+                    
+                    if (!acceptTerms) {
+                        showFeedback(document.getElementById('registerFeedback'), 'Please accept the Terms of Service', true);
+                        return;
+                    }
+                    
+                    // Validate password strength
+                    const score = updatePasswordStrength(password, 'registerPassword');
+                    if (score < 3) {
+                        showFeedback(document.getElementById('registerFeedback'), 'Please use a stronger password', true);
+                        return;
+                    }
+                    
+                    // Set loading state
+                    setLoading(completeRegistrationBtn, true);
+                    
+                    // Simulate registration
+                    setTimeout(() => {
+                        // In a real app, you would register the user
+                        showFeedback(document.getElementById('registerFeedback'), 'Registration successful! You can now login.', false);
+                        setLoading(completeRegistrationBtn, false);
+                        
+                        // Auto-fill login form after successful registration
+                        document.getElementById('email').value = email;
+                        
+                        // Close modal after a delay
+                        setTimeout(() => {
+                            registrationModal.classList.add('hidden');
+                        }, 2000);
+                    }, 1000);
+                });
+            }
+            
+            // Register with wallet button
+            const registerWithWalletBtn = document.getElementById('registerWithWalletBtn');
+            if (registerWithWalletBtn) {
+                registerWithWalletBtn.addEventListener('click', async function() {
+                    try {
+                        // Check if MetaMask is installed
+                        if (!window.ethereum) {
+                            showFeedback(document.getElementById('registerFeedback'), 'MetaMask is not installed. Please install MetaMask to continue.', true);
+                            return;
+                        }
+                        
+                        // Set loading state
+                        setLoading(this, true);
+                        
+                        // Request accounts from MetaMask
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        const address = accounts[0];
+                        
+                        debugLog('Connected to MetaMask for registration', { address });
+                        
+                        // Simulate registration with wallet
+                        setTimeout(() => {
+                            showFeedback(document.getElementById('registerFeedback'), 'Wallet registration successful! You can now login with your wallet.', false);
+                            setLoading(registerWithWalletBtn, false);
+                            
+                            // Close modal after a delay
+                            setTimeout(() => {
+                                registrationModal.classList.add('hidden');
+                            }, 2000);
+                        }, 1000);
+                        
+                    } catch (error) {
+                        console.error('Error connecting to MetaMask:', error);
+                        debugLog('MetaMask connection error', error);
+                        
+                        // Show error
+                        showFeedback(document.getElementById('registerFeedback'), `Failed to connect: ${error.message}`, true);
+                        setLoading(registerWithWalletBtn, false);
+                    }
+                });
+            }
+
+            // Function to redirect with fallback
+            async function safeRedirect(isAdmin) {
+                try {
+                    // Mark that we're about to navigate
+                    localStorage.setItem('navigationAttempt', 'true');
+                    
+                    // Direct paths without checking existence
+                    const destination = isAdmin ? 'admin.html' : 'index.html';
+                    
+                    // Show success message
+                    debugLog('Redirecting to', { destination });
+                    
+                    // Set a flag to indicate we're handling API errors
+                    localStorage.setItem('handleApiErrors', 'true');
+                    
+                    // Add a small delay to show the success message
+                    setTimeout(() => {
+                        // Try to navigate directly
+                        window.location.href = destination;
+                    }, 1000);
+                } catch (error) {
+                    console.error('Error during redirect:', error);
+                    debugLog('Redirect error', error);
+                    
+                    // Show error and fallback to index.html
+                    showFeedback(
+                        document.getElementById('loginFeedback'), 
+                        'Error during redirect. Trying fallback...', 
+                        true
+                    );
+                    
+                    // Fallback to index.html
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
+            }
+
+            // Check if user is already connected to MetaMask
+            async function checkWalletConnection() {
+                if (window.ethereum) {
+                    try {
+                        // Check if we're already connected
+                        const accounts = await window.ethereum.request({ 
+                            method: 'eth_accounts' // This doesn't trigger the MetaMask popup
+                        });
+                        
+                        if (accounts && accounts.length > 0) {
+                            const address = accounts[0];
+                            debugLog('Already connected to MetaMask', { address });
+                            
+                            // Update the connect button to show connected state
+                            const connectButton = document.getElementById('connectWalletBtn');
+                            if (connectButton) {
+                                connectButton.innerHTML = `
+                                    <span class="icon-wallet mr-2"></span>
+                                    Continue as ${address.substring(0, 6)}...${address.substring(address.length - 4)}
+                                `;
+                                connectButton.classList.remove('from-orange-400', 'to-amber-500', 'hover:from-orange-500', 'hover:to-amber-600');
+                                connectButton.classList.add('from-green-500', 'to-emerald-600', 'hover:from-green-600', 'hover:to-emerald-700');
+                            }
+                            
+                            // Show a notification that we're already connected
+                            showFeedback(
+                                document.getElementById('loginFeedback'), 
+                                'Wallet already connected! Click the button to continue.', 
+                                false
+                            );
+                            
+                            return true;
+                        }
+                    } catch (error) {
+                        console.error('Error checking wallet connection:', error);
+                        debugLog('Error checking wallet connection', error);
+                    }
+                }
+                return false;
+            }
+            
+            // Run the check on page load
+            checkWalletConnection();
+            
+            // Listen for account changes
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', function (accounts) {
+                    debugLog('MetaMask accounts changed', { accounts });
+                    if (accounts.length === 0) {
+                        // User disconnected their wallet
+                        const connectButton = document.getElementById('connectWalletBtn');
+                        if (connectButton) {
+                            connectButton.innerHTML = `
+                                <span class="icon-wallet mr-2"></span>
+                                Connect with MetaMask to Vote
+                            `;
+                            connectButton.classList.remove('from-green-500', 'to-emerald-600', 'hover:from-green-600', 'hover:to-emerald-700');
+                            connectButton.classList.add('from-orange-400', 'to-amber-500', 'hover:from-orange-500', 'hover:to-amber-600');
+                        }
+                        
+                        showFeedback(
+                            document.getElementById('loginFeedback'), 
+                            'Wallet disconnected. Please connect again to continue.', 
+                            true
+                        );
+                    } else {
+                        // User switched accounts
+                        checkWalletConnection();
+                    }
+                });
+                
+                window.ethereum.on('chainChanged', function (chainId) {
+                    debugLog('MetaMask network changed', { chainId });
+                    // Refresh the page when the network changes
+                    window.location.reload();
+                });
+            }
+
+            // Function to simulate API responses in offline mode
+            function setupOfflineMode() {
+                // Create a mock API response handler
+                window.mockApiResponse = function(endpoint, method, data) {
+                    console.log(`Mock API call: ${method} ${endpoint}`, data);
+                    
+                    // Simulate different API endpoints
+                    if (endpoint.includes('/api/auth/login')) {
+                        return {
+                            success: true,
+                            token: localStorage.getItem('token') || 'mock-token-' + Math.random(),
+                            user: {
+                                id: '1',
+                                email: localStorage.getItem('email') || 'user@example.com',
+                                role: localStorage.getItem('role') || 'voter',
+                                walletAddress: localStorage.getItem('walletAddress') || ''
+                            }
+                        };
+                    }
+                    
+                    if (endpoint.includes('/api/auth/register')) {
+                        return {
+                            success: true,
+                            message: 'Registration successful'
+                        };
+                    }
+                    
+                    if (endpoint.includes('/api/search/recent')) {
+                        return {
+                            success: true,
+                            searches: []
+                        };
+                    }
+                    
+                    // Default response
+                    return {
+                        success: true,
+                        message: 'Operation completed in offline mode'
+                    };
+                };
+                
+                // Set a flag to indicate we're in offline mode
+                localStorage.setItem('offlineMode', 'true');
+                
+                console.log('Offline mode initialized');
+            }
+            
+            // Check if we should initialize offline mode
+            if (localStorage.getItem('offlineMode') === 'true') {
+                setupOfflineMode();
+            }
+        });
+    </script>
+
+    <!-- Theme toggle script -->
+    <script>
+        // Function to toggle between light and dark theme
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? "dark" : "light";
+            document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        }
+        
+        // Set initial theme based on localStorage or system preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = "dark";
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = "light";
+        }
+        
+        // Add event listener to theme toggle button
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+        });
+    </script>
+
+    <!-- API Error Handling -->
+    <script>
+        // Intercept fetch calls to handle API errors
+        const originalFetch = window.fetch;
+        window.fetch = async function(url, options) {
+            // Check if we're in offline mode and this is an API call
+            if (localStorage.getItem('offlineMode') === 'true' && 
+                (typeof url === 'string' && url.includes('/api/'))) {
+                
+                console.log('Intercepted API call in offline mode:', url, options);
+                
+                // Extract the endpoint from the URL
+                const endpoint = typeof url === 'string' ? url : url.toString();
+                
+                // Extract the method from options
+                const method = options && options.method ? options.method : 'GET';
+                
+                // Extract the data from options
+                let data = null;
+                if (options && options.body) {
+                    try {
+                        data = JSON.parse(options.body);
+                    } catch (e) {
+                        console.error('Failed to parse request body:', e);
+                    }
+                }
+                
+                // Use the mock API response handler
+                if (window.mockApiResponse) {
+                    const mockResponse = window.mockApiResponse(endpoint, method, data);
+                    
+                    // Create a mock Response object
+                    return new Response(JSON.stringify(mockResponse), {
+                        status: 200,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                }
+            }
+            
+            // Otherwise, proceed with the original fetch
+            return originalFetch.apply(this, arguments);
+        };
+        
+        // Intercept XMLHttpRequest to handle API errors
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            // Store the URL and method for later use
+            this._url = url;
+            this._method = method;
+            
+            // Call the original open method
+            return originalXHROpen.apply(this, arguments);
+        };
+        
+        const originalXHRSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function(body) {
+            // Check if we're in offline mode and this is an API call
+            if (localStorage.getItem('offlineMode') === 'true' && 
+                (typeof this._url === 'string' && this._url.includes('/api/'))) {
+                
+                console.log('Intercepted XHR API call in offline mode:', this._url, this._method);
+                
+                // Parse the body if it exists
+                let data = null;
+                if (body) {
+                    try {
+                        data = JSON.parse(body);
+                    } catch (e) {
+                        console.error('Failed to parse XHR request body:', e);
+                    }
+                }
+                
+                // Use the mock API response handler
+                if (window.mockApiResponse) {
+                    const mockResponse = window.mockApiResponse(this._url, this._method, data);
+                    
+                    // Simulate a successful response
+                    this.status = 200;
+                    this.readyState = 4;
+                    this.responseText = JSON.stringify(mockResponse);
+                    this.onreadystatechange && this.onreadystatechange();
+                    this.onload && this.onload();
+                    
+                    // Don't actually send the request
+                    return;
+                }
+            }
+            
+            // Otherwise, proceed with the original send
+            return originalXHRSend.apply(this, arguments);
+        };
+        
+        // Intercept Axios requests if Axios is used
+        if (window.axios) {
+            const originalAxiosRequest = window.axios.request;
+            window.axios.request = function(config) {
+                // Check if we're in offline mode and this is an API call
+                if (localStorage.getItem('offlineMode') === 'true' && 
+                    (config.url && config.url.includes('/api/'))) {
+                    
+                    console.log('Intercepted Axios API call in offline mode:', config.url, config.method);
+                    
+                    // Use the mock API response handler
+                    if (window.mockApiResponse) {
+                        const mockResponse = window.mockApiResponse(config.url, config.method, config.data);
+                        
+                        // Return a resolved promise with the mock response
+                        return Promise.resolve({
+                            data: mockResponse,
+                            status: 200,
+                            statusText: 'OK',
+                            headers: {},
+                            config: config
+                        });
+                    }
+                }
+                
+                // Otherwise, proceed with the original request
+                return originalAxiosRequest.apply(this, arguments);
+            };
+        }
+    </script>
+</body>
 </html>

@@ -1,0 +1,586 @@
+document.addEventListener("DOMContentLoaded", async () => {
+    // State variables
+    let provider;
+    let signer;
+    let votingContract;
+    let API_URL = '/proxy'; // Default to proxy
+    
+    const CONTRACT_ADDRESS = "0xa95f9E532a1Cd51fD03052A8E5f04528287f8fca";
+
+    // Authentication data
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const voterId = localStorage.getItem("voterId");
+    
+    // If not logged in, redirect to login page
+    if (!token || !voterId) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    // Helper for network requests with improved token handling
+    async function makeApiRequest(endpoint, method = 'GET', data = null, retryCount = 0) {
+        // Get the most current token
+        const currentToken = localStorage.getItem('token');
+        const url = `${API_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+        
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentToken}`
+            },
+            mode: 'cors',
+            credentials: 'same-origin'
+        };
+        
+        if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
+            options.body = JSON.stringify(data);
+        }
+        
+        console.log(`Making ${method} request to ${url}`);
+        
+        try {
+            const response = await fetch(url, options);
+            
+            // Log response headers for debugging
+            const responseHeaders = {};
+            response.headers.forEach((value, key) => {
+                responseHeaders[key] = value;
+            });
+            console.log("Response headers:", responseHeaders);
+            
+            // Handle unauthorized responses directly
+            if (response.status === 401) {
+                console.log("Received 401 Unauthorized, attempting token refresh");
+                // Maximum retry to prevent infinite loops
+                if (retryCount >= 2) {
+                    console.error("Maximum retries reached for token refresh");
+                    await logout(true);
+                    throw new Error("Session expired. Please login again.");
+                }
+                
+                const refreshSuccess = await refreshToken();
+                if (refreshSuccess) {
+                    console.log("Token refreshed successfully, retrying original request");
+                    // Retry the original request with the new token
+                    return makeApiRequest(endpoint, method, data, retryCount + 1);
+                } else {
+                    console.error("Token refresh failed");
+                    await logout(true);
+                    throw new Error("Authentication failed. Please login again.");
+                }
+            }
+            
+            // Try to parse as JSON
+            let result;
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                console.log("Received non-JSON response:", text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+                
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    if (text.includes('<!DOCTYPE html>')) {
+                        throw new Error("Received HTML instead of JSON. API server may be misconfigured.");
+                    }
+                    result = { message: text };
+                }
+            }
+            
+            if (!response.ok) {
+                throw new Error(result.detail || result.message || `Request failed with status ${response.status}`);
+            }
+            
+            return result;
+        } catch (error) {
+            // Handle other auth-related errors that might not result in a 401 status
+            if (error.message.includes('token') && error.message.includes('invalid') && retryCount < 2) {
+                console.log("Token-related error detected, attempting refresh");
+                const refreshSuccess = await refreshToken();
+                if (refreshSuccess) {
+                    return makeApiRequest(endpoint, method, data, retryCount + 1);
+                }
+            }
+            
+            console.error("API request failed:", error);
+            throw error;
+        }
+    }
+    
+    // Enhanced token refresh logic with improved error handling
+    async function refreshToken() {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) {
+            console.error("No refresh token available");
+            return false;
+        }
+        
+        console.log("Attempting to refresh access token");
+        
+        try {
+            // Use a different instance of fetch to avoid recursive calls to makeApiRequest
+            const response = await fetch(`${API_URL}/refresh`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    // Include the current tokens in case the server needs them for validation
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+                mode: 'cors',
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Token refresh failed with status ${response.status}:`, errorText);
+                return false;
+            }
+            
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                console.error("Failed to parse refresh token response:", e);
+                return false;
+            }
+            
+            if (!data.token) {
+                console.error("Refresh response did not contain a new token");
+                return false;
+            }
+            
+            console.log("Token refreshed successfully");
+            
+            // Store the new tokens
+            localStorage.setItem('token', data.token);
+            
+            // If a new refresh token is provided, update it as well
+            if (data.refresh_token) {
+                localStorage.setItem('refreshToken', data.refresh_token);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("Token refresh request failed:", error);
+            return false;
+        }
+    }
+    
+    // Enhanced logout function with proper cleanup and error handling
+    async function logout(skipApiCall = false) {
+        debugLog("Initiating logout process");
+        
+        try {
+            // Get tokens before clearing them
+            const currentToken = localStorage.getItem("token");
+            
+            // Clear all auth data first to prevent further authenticated requests
+            localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("voterId");
+            localStorage.removeItem("role");
+            sessionStorage.clear();
+            
+            // Clear authentication cookies
+            document.cookie.split(";").forEach(cookie => {
+                const [name] = cookie.trim().split("=");
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            });
+            
+            // Only make API logout call if we have a token and skipApiCall is false
+            if (currentToken && !skipApiCall) {
+                try {
+                    await fetch(`${API_URL}/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentToken}`
+                        },
+                        mode: 'cors',
+                        credentials: 'same-origin'
+                    });
+                    debugLog("API logout successful");
+                } catch (error) {
+                    debugLog("API logout error:", error);
+                    // Continue with client-side logout regardless of API error
+                }
+            }
+            
+            // Disconnect from blockchain if connected
+            if (provider) {
+                try {
+                    provider = null;
+                    signer = null;
+                    votingContract = null;
+                    debugLog("Blockchain connection cleared");
+                } catch (error) {
+                    debugLog("Error clearing blockchain connection:", error);
+                }
+            }
+            
+            // Delay redirect slightly to allow for cleanup
+            setTimeout(() => {
+                debugLog("Redirecting to login page");
+                window.location.href = "login.html";
+            }, 100);
+            
+        } catch (error) {
+            debugLog("Logout error:", error);
+            // Force redirect on error to ensure user is logged out
+            window.location.href = "login.html";
+        }
+    }
+
+    // Initialize Ethers.js
+    async function initEthers() {
+        if (!window.ethereum) {
+            showFeedback("MetaMask not installed. Please install MetaMask to use this application.", true);
+            return false;
+        }
+        
+        try {
+            provider = new ethers.BrowserProvider(window.ethereum);
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+            signer = await provider.getSigner();
+            return true;
+        } catch (error) {
+            console.error("MetaMask connection error:", error);
+            showFeedback("MetaMask connection failed: " + error.message, true);
+            return false;
+        }
+    }
+
+    // Add contract state tracking
+    let contractState = {
+        initialized: false,
+        error: null,
+        initializationAttempts: 0,
+        maxAttempts: 3
+    };
+
+    // Enhanced contract initialization with retries
+    async function initContract() {
+        try {
+            contractState.initializationAttempts++;
+            console.log(`Attempting to initialize contract (Attempt ${contractState.initializationAttempts}/${contractState.maxAttempts})`);
+
+            if (!signer) {
+                throw new Error("Signer not initialized. Please connect your wallet first.");
+            }
+
+            const response = await fetch("/build/contracts/Voting.json");
+            if (!response.ok) {
+                throw new Error(`Failed to load contract ABI: ${response.statusText}`);
+            }
+            
+            const artifact = await response.json();
+            votingContract = new ethers.Contract(CONTRACT_ADDRESS, artifact.abi, signer);
+            
+            // Verify contract connection
+            await votingContract.hasVoted(voterId);
+            
+            contractState.initialized = true;
+            console.log("Contract initialized successfully");
+            return votingContract;
+        } catch (error) {
+            console.error("Contract initialization error:", error);
+            contractState.error = error;
+
+            if (contractState.initializationAttempts < contractState.maxAttempts) {
+                console.log("Retrying contract initialization...");
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between retries
+                return initContract();
+            }
+
+            showFeedback("Failed to initialize voting contract: " + error.message, true);
+            throw error;
+        }
+    }
+
+    // Contract state checker
+    function ensureContract() {
+        if (!votingContract || !contractState.initialized) {
+            throw new Error("Voting contract not properly initialized. Please refresh the page and try again.");
+        }
+    }
+
+    // Safe contract call with fallback and error handling
+    async function safeContractCall(contractFn, fallbackValue = null, errorMessage = "Contract operation failed") {
+        try {
+            return await contractFn();
+        } catch (error) {
+            console.error(errorMessage, error);
+            
+            // Check for specific error types for better user messages
+            if (error.message.includes("AlreadyVoted")) {
+                throw new Error("You have already voted");
+            } else if (error.message.includes("VotingNotActive")) {
+                throw new Error("Voting is not currently active");
+            } else if (error.message.includes("InvalidCandidate")) {
+                throw new Error("Invalid candidate selection");
+            } else if (error.message.includes("user denied")) {
+                throw new Error("Transaction rejected. Please confirm in MetaMask.");
+            }
+            
+            if (fallbackValue !== null) {
+                return fallbackValue;
+            }
+            throw new Error(errorMessage + ": " + error.message);
+        }
+    }
+
+    // Show feedback to the user
+    function showFeedback(message, isError = false, targetId = "feedback") {
+        const feedback = document.getElementById(targetId);
+        if (!feedback) return;
+        
+        const container = feedback.closest('[id$="FeedbackContainer"]') || feedback.parentElement;
+        if (container) {
+            container.classList.remove("hidden", "bg-green-800", "bg-red-800", "dark:bg-green-800", "dark:bg-red-800");
+            container.classList.add(isError ? "bg-red-800" : "bg-green-800");
+            if (document.documentElement.classList.contains("dark")) {
+                container.classList.add(isError ? "dark:bg-red-800" : "dark:bg-green-800");
+            }
+        }
+        
+        feedback.textContent = message;
+        feedback.className = "text-white";
+        
+        if (container && !isError) {
+            setTimeout(() => {
+                container.classList.add("hidden");
+            }, 5000);
+        }
+    }
+
+    // Set element loading state
+    function setLoading(element, isLoading, loadingText = "Loading...", originalText = null) {
+        if (!element) return;
+        
+        if (isLoading) {
+            element._originalText = element.innerHTML;
+            element.disabled = true;
+            element.innerHTML = `<span class="loader"></span><span>${loadingText}</span>`;
+        } else {
+            element.disabled = false;
+            element.innerHTML = originalText || element._originalText || "Ready";
+        }
+    }
+    
+    // Enhanced API connection testing with fallback handling
+    async function testApiConnection() {
+        // Store original console methods
+        const originalConsole = { ...console };
+        let apiStatus = {
+            direct: false,
+            proxy: false,
+            error: null
+        };
+
+        try {
+            // Try direct connection first
+            try {
+                const response = await fetch('http://localhost:8000/api-test', {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000 // 5 second timeout
+                });
+                
+                if (response.ok) {
+                    console.log("Direct API connection successful");
+                    API_URL = 'http://localhost:8000';
+                    apiStatus.direct = true;
+                    return true;
+                }
+            } catch (error) {
+                console.warn("Direct API connection failed:", error.message);
+                apiStatus.error = error;
+            }
+
+            // Try proxy connection
+            try {
+                const response = await fetch('/proxy/api-test', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    console.log("Proxy API connection successful");
+                    API_URL = '/proxy';
+                    apiStatus.proxy = true;
+                    return true;
+                }
+            } catch (error) {
+                console.warn("Proxy API connection failed:", error.message);
+                apiStatus.error = error;
+            }
+
+            // If both attempts fail, set up fallback mode
+            if (!apiStatus.direct && !apiStatus.proxy) {
+                console.warn("All API connections failed, entering fallback mode");
+                API_URL = '';
+                
+                // Set up mock data handlers
+                window.useMockData = true;
+                setupMockDataHandlers();
+                
+                // Show fallback mode notice to user
+                showFeedback(
+                    "Running in offline mode. Some features may be limited.", 
+                    true, 
+                    "apiStatus"
+                );
+                
+                return false;
+            }
+
+        } catch (error) {
+            console.error("Fatal API connection error:", error);
+            apiStatus.error = error;
+            return false;
+        } finally {
+            // Log final API status
+            console.log("API Connection Status:", {
+                direct: apiStatus.direct,
+                proxy: apiStatus.proxy,
+                fallback: (!apiStatus.direct && !apiStatus.proxy),
+                error: apiStatus.error?.message
+            });
+        }
+    }
+
+    // Mock data handlers for fallback mode
+    function setupMockDataHandlers() {
+        window.mockData = {
+            candidates: [],
+            votes: new Map(),
+            votingDates: {
+                start_date: Math.floor(Date.now() / 1000),
+                end_date: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 1 week from now
+            }
+        };
+
+        // Override API requests in fallback mode
+        window.makeApiRequest = async (endpoint, method, data) => {
+            if (!window.useMockData) {
+                throw new Error("Mock data handler called while not in fallback mode");
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+
+            switch (endpoint) {
+                case '/voting/dates':
+                    return window.mockData.votingDates;
+                case '/candidates':
+                    if (method === 'GET') return window.mockData.candidates;
+                    if (method === 'POST' && data) {
+                        window.mockData.candidates.push({
+                            id: window.mockData.candidates.length + 1,
+                            ...data,
+                            voteCount: 0
+                        });
+                    }
+                    break;
+                case '/vote':
+                    if (method === 'POST' && data) {
+                        const candidateId = data.candidate_id;
+                        window.mockData.votes.set(voterId, candidateId);
+                    }
+                    break;
+                default:
+                    throw new Error(`Unknown endpoint: ${endpoint}`);
+            }
+        };
+    }
+
+    // Initialize wallet address display
+    function initWalletDisplay() {
+        const walletAddressElement = document.getElementById("walletAddress");
+        if (walletAddressElement && voterId) {
+            walletAddressElement.textContent = `${voterId.substring(0, 6)}...${voterId.substring(voterId.length - 4)}`;
+            walletAddressElement.title = voterId;
+            walletAddressElement.classList.remove("hidden");
+        }
+    }
+
+    // Initialize application
+    async function initApp() {
+        await testApiConnection();
+        
+        if (await initEthers()) {
+            await initContract();
+            initWalletDisplay();
+            
+            // Initialize page-specific functionality
+            if (document.getElementById("candidateList")) {
+                await initVoterPage();
+            } else if (document.getElementById("content-candidates")) {
+                await initAdminPage();
+            }
+        }
+    }
+
+    // ========= VOTER PAGE FUNCTIONS =========
+    async function initVoterPage() {
+        try {
+            ensureContract();
+
+            const voteButton = document.getElementById("voteButton");
+            const candidateList = document.getElementById("candidateList");
+            const logoutButton = document.getElementById("logoutButton");
+            const statusAlert = document.getElementById("statusAlert");
+            
+            // Show loading state
+            showFeedback("Loading voting information...", false);
+            
+            // Load voting information with proper error handling
+            await Promise.all([
+                loadVotingDates().catch(error => {
+                    console.error("Error loading voting dates:", error);
+                    showFeedback("Failed to load voting dates", true);
+                }),
+                loadCandidates().catch(error => {
+                    console.error("Error loading candidates:", error);
+                    showFeedback("Failed to load candidates", true);
+                }),
+                checkVoteStatus().catch(error => {
+                    console.error("Error checking vote status:", error);
+                    showFeedback("Failed to check vote status", true);
+                })
+            ]);
+            
+            // Event listeners with error boundaries
+            voteButton?.addEventListener("click", async (e) => {
+                try {
+                    await castVote();
+                } catch (error) {
+                    console.error("Vote casting error:", error);
+                    showFeedback("Failed to cast vote: " + error.message, true);
+                }
+            });
+
+            logoutButton?.addEventListener("click", async (e) => {
+                try {
+                    await logout();
+                } catch (error) {
+                    console.error("Logout error:", error);
+                    window.location.href = "login.html";
+                }
+            });
+
+        } catch (error) {
+            console.error("Voter page initialization error:", error);
+            showFeedback("Failed to initialize voting page: " + error.message, true);
+        }
+    }
+    
+    async function loadVotingDates() {
+        ensureContract

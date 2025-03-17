@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kenya Blockchain Voting System - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        h1 {
+            color: #2563eb;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            color: #1e40af;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        h3 {
+            color: #1e3a8a;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        code {
+            background-color: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        pre {
+            background-color: #f1f5f9;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center py-6">
+            <div class="inline-block p-4 bg-blue-600 text-white rounded-lg">
+                <h1 class="text-3xl font-bold">Kenya Blockchain Voting System</h1>
+                <p class="text-lg">Independent Electoral and Boundaries Commission</p>
+            </div>
+        </header>
+
+        <div class="card">
+            <h1>How the Login Function Works with the Database</h1>
+
+            <p>The login function in this blockchain voting system connects users to the application through either traditional email/password authentication or MetaMask wallet connection. Here's how it works with the database:</p>
+
+            <h2>Traditional Email/Password Login Flow</h2>
+
+            <ol>
+                <li>
+                    <strong>User Input Collection</strong>:
+                    <ul>
+                        <li>User enters email and password in the login form</li>
+                        <li>Client-side validation checks for proper formatting</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Authentication Request</strong>:
+                    <ul>
+                        <li>When the login button is clicked, a POST request is sent to <code>/api/auth/login</code></li>
+                        <li>The request contains the email and password (encrypted during transit via HTTPS)</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Server-Side Processing</strong>:
+                    <ul>
+                        <li>The server receives the login request</li>
+                        <li>The password is hashed using bcrypt and compared with the stored hash in the database</li>
+                        <li>The database query looks something like:
+                            <pre><code>SELECT * FROM users WHERE email = ? LIMIT 1</code></pre>
+                        </li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Database Interaction</strong>:
+                    <ul>
+                        <li>The system uses a connection pool to efficiently manage database connections</li>
+                        <li>User credentials are stored in the <code>users</code> table with fields like:
+                            <ul>
+                                <li><code>id</code>: Unique identifier</li>
+                                <li><code>email</code>: User's email address</li>
+                                <li><code>password_hash</code>: Bcrypt-hashed password (never stored in plaintext)</li>
+                                <li><code>role</code>: User role (admin/voter)</li>
+                                <li><code>wallet_address</code>: Optional linked wallet address</li>
+                                <li><code>created_at</code>: Account creation timestamp</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Authentication Result</strong>:
+                    <ul>
+                        <li>If credentials match, a JWT (JSON Web Token) is generated containing:
+                            <ul>
+                                <li>User ID</li>
+                                <li>Email</li>
+                                <li>Role (admin/voter)</li>
+                                <li>Expiration time</li>
+                            </ul>
+                        </li>
+                        <li>The token is signed with a server-side secret key</li>
+                        <li>The response includes the token and basic user information</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Client-Side Storage</strong>:
+                    <ul>
+                        <li>The token is stored in localStorage for persistent sessions</li>
+                        <li>User role and authentication state are also stored locally</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h2>MetaMask Wallet Login Flow</h2>
+
+            <ol>
+                <li>
+                    <strong>Wallet Connection</strong>:
+                    <ul>
+                        <li>User clicks "Connect with MetaMask to Vote"</li>
+                        <li>MetaMask extension prompts for connection approval</li>
+                        <li>Upon approval, the wallet address is retrieved</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Voter Verification</strong>:
+                    <ul>
+                        <li>The wallet address is sent to the server via <code>/api/auth/wallet-login</code></li>
+                        <li>The server checks if the wallet is registered in the database:
+                            <pre><code>SELECT * FROM voters WHERE wallet_address = ? LIMIT 1</code></pre>
+                        </li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Database Tables Involved</strong>:
+                    <ul>
+                        <li><code>voters</code>: Contains registered voter information
+                            <ul>
+                                <li><code>id</code>: Unique identifier</li>
+                                <li><code>wallet_address</code>: Ethereum wallet address</li>
+                                <li><code>is_eligible</code>: Boolean indicating voting eligibility</li>
+                                <li><code>has_voted</code>: Boolean tracking voting status</li>
+                                <li><code>registration_date</code>: When the voter was registered</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Authentication Process</strong>:
+                    <ul>
+                        <li>If the wallet is found and eligible, a JWT token is generated</li>
+                        <li>The token contains the wallet address and voter role</li>
+                        <li>For admin wallets (identified by pattern or specific addresses), admin privileges are granted</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Offline Mode Handling</strong>:
+                    <ul>
+                        <li>If the database connection fails, the system falls back to offline mode</li>
+                        <li>In offline mode, authentication is simulated locally</li>
+                        <li>Voting data is temporarily stored in localStorage</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h2>Database Schema Relationships</h2>
+
+            <p>The database uses several interconnected tables:</p>
+
+            <ol>
+                <li>
+                    <strong>users</strong>: Stores traditional login accounts
+                    <ul>
+                        <li>Has one-to-many relationship with <code>login_history</code></li>
+                        <li>May have one-to-one relationship with <code>voters</code> through wallet_address</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>voters</strong>: Stores voter information
+                    <ul>
+                        <li>Has one-to-many relationship with <code>votes</code></li>
+                        <li>Has one-to-one relationship with <code>wallet_addresses</code></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>candidates</strong>: Stores candidate information
+                    <ul>
+                        <li>Has one-to-many relationship with <code>votes</code></li>
+                        <li>Has many-to-many relationship with <code>elections</code></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>votes</strong>: Records cast votes
+                    <ul>
+                        <li>Has foreign keys to <code>voters</code> and <code>candidates</code></li>
+                        <li>Includes timestamp and blockchain transaction hash</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>elections</strong>: Stores election metadata
+                    <ul>
+                        <li>Contains start/end dates, title, description</li>
+                        <li>Has one-to-many relationship with <code>candidates</code></li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h2>Security Measures</h2>
+
+            <ol>
+                <li>
+                    <strong>Password Security</strong>:
+                    <ul>
+                        <li>Passwords are never stored in plaintext</li>
+                        <li>Bcrypt with salt rounds provides protection against rainbow table attacks</li>
+                        <li>Failed login attempts are rate-limited</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Wallet Security</strong>:
+                    <ul>
+                        <li>Wallet authentication uses Ethereum's cryptographic signing</li>
+                        <li>Messages are signed to verify wallet ownership</li>
+                        <li>Nonce values prevent replay attacks</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Database Protection</strong>:
+                    <ul>
+                        <li>Prepared statements prevent SQL injection</li>
+                        <li>Connection pooling manages database resources efficiently</li>
+                        <li>Sensitive operations use transactions for data integrity</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <p>The login system is designed to be resilient, with offline capabilities ensuring users can still access the system even when the database connection is temporarily unavailable.</p>
+        </div>
+
+        <footer class="text-center py-4 text-gray-600">
+            <p>© 2024 Independent Electoral and Boundaries Commission</p>
+            <p>Blockchain-Based Electoral Management System</p>
+        </footer>
+    </div>
+</body>
+</html> 
